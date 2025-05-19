@@ -6,19 +6,27 @@ from viztracer import VizTracer # VizTracer import
 import os
 
 # CPU-bound 작업을 시뮬레이션하는 함수
+# def work_cpu(label="", iterations=2):
+#     """CPU를 많이 사용하는 작업을 시뮬레이션합니다."""
+#     # 매우 긴 리스트를 생성하고 최소값을 찾는 작업
+#     min_val = min([random.random() * 100 for _ in range(iterations)])
 def work_cpu(label="", iterations=2):
     """CPU를 많이 사용하는 작업을 시뮬레이션합니다."""
-    # print(f"[{label} CPU Work] Process ID: {os.getpid()}, Thread ID: {threading.get_ident()} starting...")
-    # 매우 긴 리스트를 생성하고 최소값을 찾는 작업
-    min_val = min([random.random() * 100 for _ in range(iterations)])
-    # print(f"[{label} CPU Work] Process ID: {os.getpid()}, Thread ID: {threading.get_ident()} finished. Min val: {min_val:.2f}")
+    # yield 간격을 설정 (작은 값으로 설정하면 더 자주 전환)
+    yield_interval = iterations // 100  # 전체 작업을 100번으로 나눔
+    
+    for i in range(0, iterations, yield_interval):
+        # yield_interval 크기만큼의 작업 수행
+        chunk = [random.random() * 100 for _ in range(min(yield_interval, iterations - i))]
+        min_val = min(chunk)
+        # 주기적으로 yield하여 다른 스레드에 실행 기회 제공
+        if i + yield_interval < iterations:
+            time.sleep(0)  # yield 효과를 내기 위한 짧은 sleep
 
 # I/O-bound 작업을 시뮬레이션하는 함수
 def work_io(label="", sleep_duration=0.5):
     """I/O 대기 작업을 시뮬레이션합니다. time.sleep()은 GIL을 해제합니다."""
-    # print(f"[{label} I/O Work] Process ID: {os.getpid()}, Thread ID: {threading.get_ident()} starting...")
     time.sleep(sleep_duration)
-    # print(f"[{label} I/O Work] Process ID: {os.getpid()}, Thread ID: {threading.get_ident()} finished.")
 
 # --- 실행 함수들 ---
 
